@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MPI Sad Darsana - Kosmik Luar Angkasa Kelompok 3</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        space: {
+                            900: '#030014',
+                            800: '#0b0624',
+                            700: '#150f3b',
+                            600: '#231955',
+                            accent: '#8b5cf6',
+                            glow: '#c084fc',
+                            gold: '#fbbf24',
+                            cyan: '#22d3ee'
+                        }
+                    },
+                    animation: {
+                        'spin-slow': 'spin 25s linear infinite',
+                        'pulse-glow': 'pulseGlow 3s ease-in-out infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        pulseGlow: {
+                            '0%, 100%': { opacity: 0.4, transform: 'scale(1)' },
+                            '50%': { opacity: 0.8, transform: 'scale(1.05)' },
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome & Google Fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Cinzel:wght@500;700&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #030014;
+            color: #f8fafc;
+            overflow-x: hidden;
+        }
+        .cinzel { font-family: 'Cinzel', serif; }
+        /* Kustomisasi Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #030014; }
+        ::-webkit-scrollbar-thumb { background: #4c1d95; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #6d28d9; }
+        
+        /* Gaya Efek Kaca Transparan */
+        .glass-panel {
+            background: rgba(15, 12, 41, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(3, 0, 20, 0.5);
+        }
+        .glass-card {
+            background: rgba(21, 15, 59, 0.5);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(192, 132, 252, 0.15);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-card:hover {
+            border-color: rgba(192, 132, 252, 0.5);
+            box-shadow: 0 0 25px rgba(139, 92, 246, 0.3);
+            transform: translateY(-4px);
+        }
+        .cosmic-gradient {
+            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 50%, #3b82f6 100%);
+        }
+        .text-glow { text-shadow: 0 0 20px rgba(192, 132, 252, 0.6); }
+        canvas#starfield {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1; pointer-events: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen relative flex flex-col justify-between selection:bg-purple-500 selection:text-white">
+
+    <!-- Latar Belakang Kanvas Bintang Bergerak -->
+    <canvas id="starfield"></canvas>
+
+    <!-- Ambient Glowing Orbs Semesta -->
+    <div class="fixed top-1/4 left-10 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl pointer-events-none animate-pulse-glow"></div>
+    <div class="fixed bottom-1/4 right-10 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none animate-pulse-glow" style="animation-delay: 1.5s;"></div>
+
+    <!-- Navigasi Menu Header Atas -->
+    <header class="sticky top-0 z-50 glass-panel border-b border-purple-900/40 px-4 lg:px-8 py-3">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('home')">
+                <div class="w-10 h-10 rounded-xl cosmic-gradient flex items-center justify-center shadow-lg shadow-purple-500/30 animate-float">
+                    <i class="fa-solid fa-atom text-white text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="cinzel font-bold text-lg tracking-wider text-white text-glow">SAD DARSANA</h1>
+                    <p class="text-xs text-purple-300 font-medium">Media Pembelajaran Interaktif Kosmik</p>
+                </div>
+            </div>
+            <!-- Menu Navigasi Utama dengan Indikator Aktif Tetap -->
+            <nav class="hidden md:flex items-center space-x-2">
+                <button onclick="switchTab('home')" id="nav-home" class="nav-btn px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 bg-white/10 text-white">
+                    <i class="fa-solid fa-house mr-2 text-purple-400"></i>Beranda
+                </button>
+                <button onclick="switchTab('materi')" id="nav-materi" class="nav-btn px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 text-purple-200 hover:text-white hover:bg-white/10">
+                    <i class="fa-solid fa-book-open mr-2 text-purple-400"></i>Materi
+                </button>
+                <button onclick="switchTab('peta')" id="nav-peta" class="nav-btn px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 text-purple-200 hover:text-white hover:bg-white/10">
+                    <i class="fa-solid fa-compass mr-2 text-purple-400"></i>Peta Konsep
+                </button>
+                <button onclick="switchTab('kuis')" id="nav-kuis" class="nav-btn px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 text-purple-200 hover:text-white hover:bg-white/10">
+                    <i class="fa-solid fa-brain mr-2 text-purple-400"></i>Kuis Kosmik
+                </button>
+                <button onclick="switchTab('game')" id="nav-game" class="nav-btn px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 text-purple-200 hover:text-white hover:bg-white/10">
+                    <i class="fa-solid fa-gamepad mr-2 text-purple-400"></i>Mini Games
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- AREA UTAMA TEMPAT HALAMAN BERGANTI INTERAKTIF -->
+    <main class="max-w-7xl mx-auto px-4 lg:px-8 py-8 flex-grow relative z-10 w-full">
+        
+        <!-- Halaman 1: Beranda -->
+        <div id="home" class="tab-content">
+            <div class="glass-card rounded-2xl p-8 max-w-2xl mx-auto text-center mt-10">
+                <h2 class="cinzel text-3xl font-bold text-white mb-4 text-glow">Selamat Datang di Semesta Filsafat</h2>
+                <p class="text-purple-100 mb-6 text-sm leading-relaxed">Media Pembelajaran Interaktif ini dirancang khusus untuk membawa kamu menjelajahi 6 cabang filsafat Hindu (Sad Darsana) secara mendalam dengan visualisasi kosmik.</p>
+                <button onclick="switchTab('materi')" class="cosmic-gradient text-white px-6 py-3 rounded-xl font-semibold shadow-lg shadow-purple-500/20 hover:scale-105 transition-transform">
+                    Mulai Belajar <i class="fa-solid fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+<!-- Halaman 2: Materi Lengkap (Menampilkan Formasi Enam Cabang) -->
+        <div id="materi" class="tab-content hidden">
+            <h2 class="cinzel text-3xl font-bold text-center text-white mb-8 text-glow">Enam Cabang Astika (Sad Darsana)</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                
+                <!-- 1. Nyaya -->
+                <div class="glass-card rounded-2xl p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center text-white text-xl mb-4"><i class="fa-solid fa-eye"></i></div>
+                        <h3 class="font-bold text-xl text-white mb-2 tracking-wide">1. Nyaya Darsana</h3>
+                        <p class="text-xs text-purple-200/80 leading-relaxed mb-4">Didirikan oleh Resi Gautama. Sistem filsafat ini menitikberatkan pada aspek logika, epistemologi, serta aturan hukum pembuktian ilmiah untuk mencapai kebenaran rasional.</p>
+                    </div>
+                    <span class="text-[10px] text-space-cyan font-semibold tracking-wider uppercase"><i class="fa-solid fa-circle-info mr-1"></i> Logika & Analisis</span>
+                </div>
+
+                <!-- 2. Vaisasika -->
+                <div class="glass-card rounded-2xl p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center text-white text-xl mb-4"><i class="fa-solid fa-cubes"></i></div>
+                        <h3 class="font-bold text-xl text-white mb-2 tracking-wide">2. Vaisasika Darsana</h3>
+                        <p class="text-xs text-purple-200/80 leading-relaxed mb-4">Didirikan oleh Resi Kanada. Mengembangkan kosmologi alam semesta fisik, yang dijabarkan terbentuk dari kombinasi atom-atom unsur terkecil yang abadi.</p>
+                    </div>
+                    <span class="text-[10px] text-space-gold font-semibold tracking-wider uppercase"><i class="fa-solid fa-circle-info mr-1"></i> Kosmologi Atom</span>
+                </div>
+
+                <!-- 3. Samkhya -->
+                <div class="glass-card rounded-2xl p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center text-white text-xl mb-4"><i class="fa-solid fa-yin-yang"></i></div>
+                        <h3 class="font-bold text-xl text-white mb-2 tracking-wide">3. Samkhya Darsana</h3>
+                        <p class="text-xs text-purple-200/80 leading-relaxed mb-4">Didirikan oleh Resi Kapila. Filsafat dualistik yang menerangkan realitas semesta alam bersumber dari hubungan erat antara Purusa (jiwa) dan Prakrti (materi).</p>
+                    </div>
+                    <span class="text-[10px] text-space-accent font-semibold tracking-wider uppercase"><i class="fa-solid fa-circle-info mr-1"></i> Jiwa & Materi</span>
+                </div>
+
+                <!-- 4. Yoga -->
+                <div class="glass-card rounded-2xl p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center text-white text-xl mb-4"><i class="fa-solid fa-heart"></i></div>
+                        <h3 class="font-bold text-xl text-white mb-2 tracking-wide">4. Yoga Darsana</h3>
+                        <p class="text-xs text-purple-200/80 leading-relaxed mb-4">Didirikan oleh Maharsi Patanjali. Wujud aplikasi praktis dari teori Samkhya melalui delapan tahapan disiplin spiritual spiritual dan meditasi terstruktur.</p>
+                    </div>
+                    <span class="text-[10px] text-emerald-400 font-semibold tracking-wider uppercase"><i class="fa-solid fa-circle-info mr-1"></i> Disiplin Meditasi</span>
+                </div>
+
+                <!-- 5. Mimamsa -->
+                <div class="glass-card rounded-2xl p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center text-white text-xl mb-4"><i class="fa-solid fa-scroll"></i></div>
+                        <h3 class="font-bold text-xl text-white mb-2 tracking-wide">5. Mimamsa Darsana</h3>
+                        <p class="text-xs text-purple-200/80 leading-relaxed mb-4">Didirikan oleh Resi Jaimini. Berfokus pada interpretasi mendalam terhadap ritual teks suci Weda serta kewajiban pelaksanaan Dharma manusia di dunia.</p>
+                    </div>
+                    <span class="text-[10px] text-pink-400 font-semibold tracking-wider uppercase"><i class="fa-solid fa-circle-info mr-1"></i> Ritual & Teks Weda</span>
+                </div>
+
+                <!-- 6. Vedanta -->
+                <div class="glass-card rounded-2xl p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center text-white text-xl mb-4"><i class="fa-solid fa-dharmachakra"></i></div>
+                        <h3 class="font-bold text-xl text-white mb-2 tracking-wide">6. Vedanta Darsana</h3>
+                        <p class="text-xs text-purple-200/80 leading-relaxed mb-4">Didirikan oleh Resi Badarayana. Puncak filosofis tertinggi ajaran Weda (Upanisad) yang membahas esensi sejati Tuhan (Brahman) dan Jiwa (Atman).</p>
+                    </div>
+                    <span class="text-[10px] text-red-400 font-semibold tracking-wider uppercase"><i class="fa-solid fa-circle-info mr-1"></i> Teologi Tertinggi</span>
+                </div>
+
+            </div>
+        </div>
+<!-- Halaman 3: Peta Konsep -->
+        <div id="peta" class="tab-content hidden">
+            <div class="glass-card rounded-2xl p-8 text-center max-w-3xl mx-auto">
+                <h2 class="cinzel text-2xl font-bold text-white mb-4 text-glow"><i class="fa-solid fa-compass mr-2 text-purple-400"></i>Peta Konsep Rasi Bintang Filsafat</h2>
+                <div class="border-2 border-dashed border-purple-500/30 rounded-xl p-20 bg-space-900/40 text-purple-300 text-sm">
+                    [ Tempat Alur Gambar Peta Konsep Kelompok 3 Di Sini ]
+                </div>
+            </div>
+        </div>
+
+        <!-- Halaman 4: Kuis -->
+        <div id="kuis" class="tab-content hidden">
+            <div class="glass-card rounded-2xl p-8 max-w-xl mx-auto">
+                <div class="flex justify-between items-center mb-6">
+                    <span class="text-xs bg-purple-500/20 text-white px-3 py-1 rounded-full font-medium">Soal 1 dari 5</span>
+                </div>
+                <h3 class="text-base font-bold text-white mb-4">Siapakah resi agung pendiri ajaran logika Nyaya Darsana?</h3>
+                <div class="space-y-3 text-xs">
+                    <button onclick="confetti()" class="w-full text-left bg-space-800/40 hover:bg-purple-900/30 border border-purple-900/50 p-4 rounded-xl transition-all flex items-center"><span class="w-6 h-6 rounded-lg bg-space-700 flex items-center justify-center mr-3 font-bold">A</span> Resi Gautama (Benar - Klik untuk Confetti)</button>
+                    <button class="w-full text-left bg-space-800/40 hover:bg-purple-900/30 border border-purple-900/50 p-4 rounded-xl transition-all flex items-center"><span class="w-6 h-6 rounded-lg bg-space-700 flex items-center justify-center mr-3 font-bold">B</span> Resi Kapila</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Halaman 5: Mini Games -->
+        <div id="game" class="tab-content hidden">
+            <div class="glass-card rounded-2xl p-8 text-center max-w-xl mx-auto">
+                <div class="w-16 h-16 bg-space-gold/20 rounded-2xl flex items-center justify-center text-space-gold text-3xl mx-auto mb-4 animate-float"><i class="fa-solid fa-gamepad"></i></div>
+                <h2 class="cinzel text-2xl font-bold text-white mb-2 text-glow">Mini Games Kosmik</h2>
+                <p class="text-sm text-purple-200/80 mb-6">Modul ruang tantangan menyusun rasi bintang Sad Darsana Kelompok 3.</p>
+                <button onclick="confetti()" class="bg-amber-500 hover:bg-amber-600 text-space-950 font-bold px-6 py-2.5 rounded-xl shadow-lg shadow-amber-500/20 transition-all text-xs">
+                    Aktifkan Selebrasi Kemenangan 🎉
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer Kaki Halaman -->
+    <footer class="glass-panel border-t border-purple-900/40 py-4 px-6 text-center text-xs text-purple-400/80 relative z-10">
+        <p>© 2026 Kelompok 3 MPI Sad Darsana. Dibuat dengan Seni Kosmik & Tailwind CSS.</p>
+    </footer>
+
+    <!-- ENGINE UTAMA: JAVASCRIPT ANIMASI & ANTI-STUCK TABS -->
+    <script>
+        function switchTab(tabId) {
+            // 1. Sembunyikan seluruh tab halaman konten aktif
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(content => {
+                content.classList.add('hidden');
+            });
+
+            // 2. Munculkan id halaman yang dipanggil tombol
+            const activeContent = document.getElementById(tabId);
+            if (activeContent) {
+                activeContent.classList.remove('hidden');
+            }
+
+            // 3. Reset warna baju/gaya dasar semua tombol menu navigasi
+            const buttons = document.querySelectorAll('.nav-btn');
+            buttons.forEach(btn => {
+                btn.className = "nav-btn px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 text-purple-200 hover:text-white hover:bg-white/10";
+            });
+
+            // 4. Berikan penanda warna putih solid menyala pada tombol aktif saat ini
+            const currentActiveButton = document.getElementById('nav-' + tabId);
+            if (currentActiveButton) {
+                currentActiveButton.className = "nav-btn px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 bg-white/10 text-white";
+            }
+        }
+
+        // Jalur Logika Gambar Sistem Animasi Starfield Luar Angkasa
+        const canvas = document.getElementById('starfield');
+        const ctx = canvas.getContext('2d');
+        let stars = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        for (let i = 0; i < 100; i++) {
+            stars.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                size: Math.random() * 1.5,
+                speed: Math.random() * 0.3 + 0.1
+            });
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+            stars.forEach(star => {
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                ctx.fill();
+                star.y += star.speed;
+                if (star.y > canvas.height) {
+                    star.y = 0;
+                    star.x = Math.random() * canvas.width;
+                }
+            });
+            requestAnimationFrame(animate);
+        }
+        animate();
+    </script>
+</body>
+</html>
